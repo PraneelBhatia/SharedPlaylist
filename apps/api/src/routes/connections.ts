@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { isProvider } from "@sharedplaylist/shared-types";
 import { prisma } from "../db/prisma.ts";
@@ -33,7 +33,7 @@ export async function registerConnectionRoutes(app: FastifyInstance): Promise<vo
     };
   });
 
-  app.post("/v1/connections/:provider/start", async (req) => {
+  async function startConnection(req: FastifyRequest) {
     const user = await getCurrentUser(req);
     const { provider } = providerParam.parse(req.params);
     const client = getProviderClient(provider);
@@ -47,12 +47,23 @@ export async function registerConnectionRoutes(app: FastifyInstance): Promise<vo
     const auth = client.getAuthUrl();
     await redis.setex(`oauth:${auth.state}`, 600, JSON.stringify({ userId: user.id, verifier: auth.verifier }));
     return { provider, url: auth.url, state: auth.state };
+  }
+
+  app.get("/v1/connections/:provider/start", async (req, reply) => {
+    const started = await startConnection(req);
+    if ("url" in started && started.url) return reply.redirect(started.url);
+    return started;
   });
 
-  app.post("/v1/connections/:provider/callback", async (req) => {
+  app.post("/v1/connections/:provider/start", async (req) => {
+    return startConnection(req);
+  });
+
+  async function finishConnection(req: FastifyRequest) {
     const user = await getCurrentUser(req);
     const { provider } = providerParam.parse(req.params);
-    const body = callbackBody.parse(req.body);
+    const input = req.method === "GET" ? req.query : req.body;
+    const body = callbackBody.parse(input);
 
     if (provider === "apple_music") {
       if (!body.musicUserToken) throw new Error("musicUserToken is required for Apple Music");
@@ -98,5 +109,14 @@ export async function registerConnectionRoutes(app: FastifyInstance): Promise<vo
     });
     await redis.del(`oauth:${body.state}`);
     return { ok: true, provider };
+  }
+
+  app.get("/v1/connections/:provider/callback", async (req, reply) => {
+    await finishConnection(req);
+    return reply.redirect("/");
+  });
+
+  app.post("/v1/connections/:provider/callback", async (req) => {
+    return finishConnection(req);
   });
 }

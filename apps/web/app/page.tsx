@@ -53,6 +53,11 @@ export default async function Home() {
                   <span className={connection?.connected ? "status" : "status bad"}>
                     {connection?.connected ? "Connected" : "Not connected"}
                   </span>
+                  {!connection?.connected && !disabled ? (
+                    <a className="action" href={`/v1/connections/${provider.id}/start`}>
+                      Connect
+                    </a>
+                  ) : null}
                 </div>
               );
             })}
