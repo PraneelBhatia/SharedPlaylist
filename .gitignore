@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Apple MusicKit private keys — NEVER commit
+*.p8
+AuthKey_*.p8
+
+# State / runtime
+*.sqlite
+*.sqlite-journal
+*.db
+smoke/state/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Brainstorm artifacts (these are local-only)
+.superpowers/

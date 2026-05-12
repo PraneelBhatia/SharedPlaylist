@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SharedPlaylist — Authorize Apple Music</title>
+    <meta name="apple-music-developer-token" content="__DEVELOPER_TOKEN__" />
+    <meta name="apple-music-app-name" content="SharedPlaylist Smoke Test" />
+    <meta name="apple-music-app-build" content="0.0.1" />
+    <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; max-width: 480px; margin: 4rem auto; padding: 0 1.5rem; line-height: 1.5; }
+      h1 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+      p { color: #444; }
+      button {
+        background: #fa233b; color: white; border: none; padding: 0.8rem 1.5rem;
+        font-size: 1rem; border-radius: 8px; cursor: pointer; margin-top: 1.2rem;
+      }
+      button:disabled { background: #ccc; cursor: not-allowed; }
+      .status { margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 6px; }
+      .status.ok { background: #e8f5e9; color: #1b5e20; }
+      .status.err { background: #ffebee; color: #b71c1c; }
+      code { background: #f5f5f7; padding: 2px 6px; border-radius: 3px; font-size: 0.85rem; }
+    </style>
+  </head>
+  <body>
+    <h1>🍎 Authorize Apple Music</h1>
+    <p>
+      This page asks Apple Music to grant SharedPlaylist a <b>Music User Token</b>.
+      The token is sent to <code>http://127.0.0.1:8889/capture</code> on your machine
+      and stored locally. You can revoke it any time at
+      <a href="https://account.apple.com/account/manage" target="_blank">account.apple.com</a>.
+    </p>
+    <button id="authBtn" disabled>Loading MusicKit…</button>
+    <div id="status"></div>
+    <script>
+      document.addEventListener("musickitloaded", async () => {
+        const btn = document.getElementById("authBtn");
+        const statusEl = document.getElementById("status");
+        try {
+          const music = await MusicKit.configure({
+            developerToken: document.querySelector('meta[name="apple-music-developer-token"]').content,
+            app: { name: "SharedPlaylist Smoke Test", build: "0.0.1" },
+          });
+          btn.disabled = false;
+          btn.textContent = "Authorize Apple Music";
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            btn.textContent = "Awaiting Apple sign-in…";
+            try {
+              const userToken = await music.authorize();
+              const res = await fetch("/capture", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ musicUserToken: userToken }),
+              });
+              if (!res.ok) throw new Error(`Server returned ${res.status}`);
+              statusEl.className = "status ok";
+              statusEl.textContent = "✓ Authorized. You can close this tab and return to the terminal.";
+              btn.style.display = "none";
+            } catch (err) {
+              statusEl.className = "status err";
+              statusEl.textContent = "✗ " + (err.message || err);
+              btn.disabled = false;
+              btn.textContent = "Try again";
+            }
+          });
+        } catch (err) {
+          statusEl.className = "status err";
+          statusEl.textContent = "MusicKit configuration failed: " + (err.message || err);
+        }
+      });
+    </script>
+  </body>
+</html>

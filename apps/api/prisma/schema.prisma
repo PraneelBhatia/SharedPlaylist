@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Provider {
+  spotify
+  apple_music
+  youtube
+}
+
+enum PairStatus {
+  pending
+  active
+  paused
+}
+
+enum MatchStrategy {
+  isrc
+  fuzzy
+  manual
+}
+
+enum SyncEventKind {
+  detected
+  matched
+  skipped
+  written
+  failed
+  unmatched
+}
+
+model User {
+  id          String              @id @default(cuid())
+  email       String?             @unique
+  displayName String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  connections ServiceConnection[]
+  memberships PairMember[]
+}
+
+model ServiceConnection {
+  id                    String    @id @default(cuid())
+  userId                String
+  provider              Provider
+  providerAccountId     String?
+  encryptedAccessToken  String?
+  encryptedRefreshToken String?
+  encryptedUserToken    String?
+  tokenExpiresAt        DateTime?
+  scopes                String[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([provider, providerAccountId])
+}
+
+model Pair {
+  id            String         @id @default(cuid())
+  status        PairStatus     @default(pending)
+  inviteToken   String?        @unique
+  inviteExpires DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  members       PairMember[]
+  playlists     PlaylistLink[]
+  mappings      TrackMapping[]
+  events        SyncEvent[]
+  unmatched     UnmatchedTrack[]
+}
+
+model PairMember {
+  id        String   @id @default(cuid())
+  pairId    String
+  userId    String
+  createdAt DateTime @default(now())
+  pair      Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, userId])
+}
+
+model PlaylistLink {
+  id          String   @id @default(cuid())
+  pairId      String
+  provider    Provider
+  playlistId  String
+  name        String?
+  canEdit     Boolean  @default(true)
+  cursor      String?
+  lastPolledAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  pair        Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, provider])
+}
+
+model TrackMapping {
+  id                  String        @id @default(cuid())
+  pairId              String
+  sourceProvider      Provider
+  sourceTrackId       String
+  destinationProvider Provider
+  destinationTrackId  String
+  isrc                String?
+  strategy            MatchStrategy
+  confidence          Float
+  createdAt           DateTime      @default(now())
+  pair                Pair          @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, sourceProvider, sourceTrackId, destinationProvider])
+  @@index([pairId, destinationProvider, destinationTrackId])
+  @@index([isrc])
+}
+
+model SyncEvent {
+  id         String        @id @default(cuid())
+  pairId     String
+  kind       SyncEventKind
+  provider   Provider
+  message    String
+  metadata   Json?
+  confidence Float?
+  createdAt  DateTime      @default(now())
+  pair       Pair          @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([pairId, createdAt])
+}
+
+model UnmatchedTrack {
+  id                  String   @id @default(cuid())
+  pairId              String
+  sourceProvider      Provider
+  sourceTrackId       String
+  destinationProvider Provider
+  title               String
+  artists             String[]
+  isrc                String?
+  candidates          Json?
+  reviewedAt          DateTime?
+  createdAt           DateTime @default(now())
+  pair                Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([pairId, createdAt])
+}

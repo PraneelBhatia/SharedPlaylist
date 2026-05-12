@@ -1,0 +1,39 @@
+{
+  "name": "sharedplaylist",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cross-service collaborative playlist agent. One shared playlist, two music apps.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @sharedplaylist/api --filter @sharedplaylist/web dev",
+    "dev:api": "pnpm --filter @sharedplaylist/api dev",
+    "dev:web": "pnpm --filter @sharedplaylist/web dev",
+    "dev:worker": "pnpm --filter @sharedplaylist/api dev:worker",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @sharedplaylist/api db:generate",
+    "db:migrate": "pnpm --filter @sharedplaylist/api db:migrate",
+    "smoke:auth:spotify": "node --env-file=.env --import tsx smoke/auth/spotify-pkce.ts",
+    "smoke:auth:apple": "node --env-file=.env --import tsx smoke/auth/serve-musickit.ts",
+    "smoke:run": "node --env-file=.env --import tsx smoke/index.ts",
+    "smoke:list-playlists": "node --env-file=.env --import tsx smoke/list-playlists.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.7.4",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.8"
+  }
+}
