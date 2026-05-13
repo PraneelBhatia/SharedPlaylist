@@ -80,16 +80,13 @@ Local app setup:
 npm exec pnpm install
 cp .env.example .env
 # fill TOKEN_ENCRYPTION_KEY and provider credentials
-docker compose up postgres redis
+# start Postgres and Redis locally using your preferred setup
 npm exec pnpm db:generate
 npm exec pnpm db:migrate
 npm exec pnpm dev:api
 npm exec pnpm dev:worker
 npm exec pnpm dev:web
 ```
-
-For a single-VM GCP deployment, use `docker compose up --build` after filling
-`.env`. Postgres is durable state; Redis/BullMQ is only scheduling state.
 
 ## Contributing
 
