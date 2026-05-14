@@ -143,3 +143,28 @@ describe("GET /v1/shares/preview/:token", () => {
     expect(res.json().sourcePlaylistName).toBeUndefined();
   });
 });
+
+describe("POST /v1/shares/accept/:token", () => {
+  beforeEach(cleanup);
+
+  it("Bob joins Alice's share; status flips active", async () => {
+    const alice = await makeUser("alice@example.com");
+    const bob = await makeUser("bob@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "Road Trip Mix" },
+    });
+    const token = created.json().inviteToken;
+    const accepted = await app.inject({
+      method: "POST",
+      url: `/v1/shares/accept/${token}`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+      payload: { destinationProvider: "apple_music" },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json().share.status).toBe("active");
+    expect(accepted.json().share.memberCount).toBe(2);
+  });
+});

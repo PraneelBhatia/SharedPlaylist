@@ -7,11 +7,17 @@ import { config } from "../config.ts";
 import { getCurrentUser } from "./context.ts";
 import { mintInviteToken } from "../shares/invite-token.ts";
 import { hashIp } from "../shares/ip-hash.ts";
+import { acceptShare } from "../shares/accept-share.ts";
+import type { Provider } from "@sharedplaylist/shared-types";
 
 const createShareBody = z.object({
   sourceProvider: z.string().refine(isProvider),
   sourcePlaylistId: z.string().min(1),
   sourcePlaylistName: z.string().min(1),
+});
+
+const acceptShareBody = z.object({
+  destinationProvider: z.string().refine(isProvider),
 });
 
 async function loadShareForUser(userId: string, shareId: string) {
@@ -149,6 +155,29 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     const share = await loadShareForUser(user.id, params.id);
     const lastSyncedAt = await getLastSyncedAt(share.id);
     return { share: toShareDto(share, lastSyncedAt) };
+  });
+
+  app.post("/v1/shares/accept/:token", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ token: z.string() }).parse(req.params);
+    const body = acceptShareBody.parse(req.body);
+
+    // Stub for now — Task 11b replaces this with a real provider call.
+    const stubCreate = async (name: string, provider: string) => ({
+      playlistId: `${provider}_pl_${Math.random().toString(36).slice(2, 10)}`,
+      name,
+    });
+    const share = await acceptShare({
+      token: params.token,
+      userId: user.id,
+      destinationProvider: body.destinationProvider as Provider,
+      memberCap: config.MAX_SHARE_MEMBERS,
+      autoCreatePlaylist: stubCreate as never,
+    });
+
+    const fullShare = await loadShareForUser(user.id, share.id);
+    const lastSyncedAt = await getLastSyncedAt(share.id);
+    return { share: toShareDto(fullShare, lastSyncedAt) };
   });
 
   app.get("/v1/shares/preview/:token", async (req, reply) => {
