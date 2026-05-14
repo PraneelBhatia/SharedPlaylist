@@ -215,6 +215,24 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
+  app.post("/v1/shares/:id/pause", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareForUser(user.id, params.id);
+    await prisma.pair.update({ where: { id: params.id }, data: { status: "paused" } });
+    const share = await loadShareForUser(user.id, params.id);
+    return { share: toShareDto(share, await getLastSyncedAt(share.id)) };
+  });
+
+  app.post("/v1/shares/:id/resume", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareForUser(user.id, params.id);
+    await prisma.pair.update({ where: { id: params.id }, data: { status: "active" } });
+    const share = await loadShareForUser(user.id, params.id);
+    return { share: toShareDto(share, await getLastSyncedAt(share.id)) };
+  });
+
   app.post("/v1/shares/:id/leave", async (req) => {
     const user = await getCurrentUser(req);
     const params = z.object({ id: z.string() }).parse(req.params);

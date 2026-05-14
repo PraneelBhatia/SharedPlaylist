@@ -175,3 +175,38 @@ describe("POST /v1/shares/accept/:token", () => {
     expect(accepted.json().share.memberCount).toBe(2);
   });
 });
+
+describe("pause and resume", () => {
+  beforeEach(cleanup);
+
+  it("toggles status active <-> paused", async () => {
+    const alice = await makeUser("alice@example.com");
+    const bob = await makeUser("bob@example.com");
+    const app = buildServer();
+
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const token = created.json().inviteToken;
+    const shareId = created.json().share.id;
+    await app.inject({
+      method: "POST", url: `/v1/shares/accept/${token}`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+      payload: { destinationProvider: "apple_music" },
+    });
+
+    const paused = await app.inject({
+      method: "POST", url: `/v1/shares/${shareId}/pause`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+    expect(paused.json().share.status).toBe("paused");
+
+    const resumed = await app.inject({
+      method: "POST", url: `/v1/shares/${shareId}/resume`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+    expect(resumed.json().share.status).toBe("active");
+  });
+});
