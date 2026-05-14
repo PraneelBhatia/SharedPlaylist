@@ -20,5 +20,10 @@ if (existsSync(envPath)) {
 export default defineConfig({
   test: {
     environment: "node",
+    // Tests share a single Postgres database and cleanup() truncates between
+    // each test. Running files in parallel causes one suite's cleanup to wipe
+    // another suite's seed data mid-test. Serialize file execution to keep the
+    // suite stable.
+    fileParallelism: false,
   },
 });
