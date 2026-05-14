@@ -152,6 +152,23 @@ export async function searchAppleSongs(query: string): Promise<ProviderTrack[]> 
   return body.results?.songs?.data.map(toProviderTrack) ?? [];
 }
 
+export async function createApplePlaylist(
+  _accessToken: string,
+  name: string,
+  musicUserToken?: string,
+): Promise<{ playlistId: string; name: string }> {
+  if (!musicUserToken) throw new Error("Apple Music User Token is required");
+  const res = await appleFetch(`/v1/me/library/playlists`, musicUserToken, {
+    method: "POST",
+    body: JSON.stringify({ attributes: { name } }),
+  });
+  if (!res.ok) throw new Error(`Apple playlist create failed: ${res.status} ${await res.text()}`);
+  const body = (await res.json()) as { data: { id: string; attributes?: { name?: string } }[] };
+  const created = body.data[0];
+  if (!created) throw new Error("Apple playlist create returned empty data");
+  return { playlistId: created.id, name: created.attributes?.name ?? name };
+}
+
 export async function addAppleSongsToPlaylist(
   _accessToken: string,
   playlistId: string,

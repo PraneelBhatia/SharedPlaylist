@@ -1,6 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildServer } from "../server.ts";
 import { prisma } from "../db/prisma.ts";
+
+vi.mock("../shares/create-destination-playlist.ts", () => ({
+  createDestinationPlaylistFor: vi.fn(async (_userId: string, name: string, provider: string) => ({
+    playlistId: `${provider}_pl_${Math.random().toString(36).slice(2, 10)}`,
+    name,
+  })),
+}));
 
 const TEST_USER_HEADER = "x-user-id";
 

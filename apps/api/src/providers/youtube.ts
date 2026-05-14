@@ -139,6 +139,22 @@ export async function listYoutubePlaylistTracks(
   return out;
 }
 
+export async function createYoutubePlaylist(
+  accessToken: string,
+  name: string,
+): Promise<{ playlistId: string; name: string }> {
+  const res = await youtubeFetch(accessToken, `/playlists?part=snippet,status`, {
+    method: "POST",
+    body: JSON.stringify({
+      snippet: { title: name },
+      status: { privacyStatus: "private" },
+    }),
+  });
+  if (!res.ok) throw new Error(`YouTube playlist create failed: ${res.status} ${await res.text()}`);
+  const body = (await res.json()) as { id: string; snippet?: { title?: string } };
+  return { playlistId: body.id, name: body.snippet?.title ?? name };
+}
+
 export async function addYoutubeTracksToPlaylist(
   accessToken: string,
   playlistId: string,

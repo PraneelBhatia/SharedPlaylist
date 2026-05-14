@@ -8,6 +8,7 @@ import { getCurrentUser } from "./context.ts";
 import { mintInviteToken } from "../shares/invite-token.ts";
 import { hashIp } from "../shares/ip-hash.ts";
 import { acceptShare } from "../shares/accept-share.ts";
+import { createDestinationPlaylistFor } from "../shares/create-destination-playlist.ts";
 import type { Provider } from "@sharedplaylist/shared-types";
 
 const createShareBody = z.object({
@@ -162,17 +163,15 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     const params = z.object({ token: z.string() }).parse(req.params);
     const body = acceptShareBody.parse(req.body);
 
-    // Stub for now — Task 11b replaces this with a real provider call.
-    const stubCreate = async (name: string, provider: string) => ({
-      playlistId: `${provider}_pl_${Math.random().toString(36).slice(2, 10)}`,
-      name,
-    });
+    const createDestinationPlaylist = async (name: string, provider: Provider) =>
+      createDestinationPlaylistFor(user.id, name, provider);
+
     const share = await acceptShare({
       token: params.token,
       userId: user.id,
       destinationProvider: body.destinationProvider as Provider,
       memberCap: config.MAX_SHARE_MEMBERS,
-      autoCreatePlaylist: stubCreate as never,
+      autoCreatePlaylist: createDestinationPlaylist,
     });
 
     const fullShare = await loadShareForUser(user.id, share.id);
