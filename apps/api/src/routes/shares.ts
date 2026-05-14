@@ -6,6 +6,7 @@ import { prisma } from "../db/prisma.ts";
 import { config } from "../config.ts";
 import { getCurrentUser } from "./context.ts";
 import { mintInviteToken } from "../shares/invite-token.ts";
+import { hashIp } from "../shares/ip-hash.ts";
 
 const createShareBody = z.object({
   sourceProvider: z.string().refine(isProvider),
@@ -148,5 +149,40 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     const share = await loadShareForUser(user.id, params.id);
     const lastSyncedAt = await getLastSyncedAt(share.id);
     return { share: toShareDto(share, lastSyncedAt) };
+  });
+
+  app.get("/v1/shares/preview/:token", async (req, reply) => {
+    const params = z.object({ token: z.string().min(1) }).parse(req.params);
+    const share = await prisma.pair.findUnique({
+      where: { inviteToken: params.token },
+      include: { creator: true, members: true },
+    });
+
+    const isExpired =
+      !share || !share.inviteExpires || share.inviteExpires <= new Date() || share.status === "ended";
+
+    if (isExpired || !share) {
+      reply.code(410);
+      return { reason: "invalid_or_expired" };
+    }
+
+    if (share.members.length >= config.MAX_SHARE_MEMBERS) {
+      reply.code(409);
+      return { reason: "full" };
+    }
+
+    const userAgent = req.headers["user-agent"] ?? null;
+    const ipHash = hashIp(req.ip, config.IP_HASH_SALT, new Date());
+    await prisma.shareInviteView.create({
+      data: { pairId: share.id, userAgent, ipHash },
+    });
+
+    return {
+      sourcePlaylistName: share.sourcePlaylistName,
+      sourceProvider: share.sourceProvider,
+      creatorDisplayName: share.creator.displayName,
+      memberCount: share.members.length,
+      memberCap: config.MAX_SHARE_MEMBERS,
+    };
   });
 }

@@ -111,3 +111,35 @@ describe("GET /v1/shares and GET /v1/shares/:id", () => {
     expect(res.statusCode).toBe(403);
   });
 });
+
+describe("GET /v1/shares/preview/:token", () => {
+  beforeEach(cleanup);
+
+  it("returns preview metadata for a valid token + logs a view", async () => {
+    const alice = await makeUser("alice@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "Road Trip Mix" },
+    });
+    const token = created.json().inviteToken;
+
+    const res = await app.inject({ method: "GET", url: `/v1/shares/preview/${token}` });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.sourcePlaylistName).toBe("Road Trip Mix");
+    expect(body.sourceProvider).toBe("spotify");
+    expect(body.memberCount).toBe(1);
+    expect(body.memberCap).toBe(5);
+    const views = await prisma.shareInviteView.count();
+    expect(views).toBe(1);
+  });
+
+  it("returns 410 for an unknown token without leaking info", async () => {
+    const app = buildServer();
+    const res = await app.inject({ method: "GET", url: "/v1/shares/preview/does-not-exist" });
+    expect(res.statusCode).toBe(410);
+    expect(res.json().sourcePlaylistName).toBeUndefined();
+  });
+});
