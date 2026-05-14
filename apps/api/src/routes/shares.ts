@@ -8,6 +8,7 @@ import { getCurrentUser } from "./context.ts";
 import { mintInviteToken } from "../shares/invite-token.ts";
 import { hashIp } from "../shares/ip-hash.ts";
 import { acceptShare } from "../shares/accept-share.ts";
+import { leaveShare } from "../shares/leave-share.ts";
 import { createDestinationPlaylistFor } from "../shares/create-destination-playlist.ts";
 import type { Provider } from "@sharedplaylist/shared-types";
 
@@ -212,5 +213,16 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
       memberCount: share.members.length,
       memberCap: config.MAX_SHARE_MEMBERS,
     };
+  });
+
+  app.post("/v1/shares/:id/leave", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    const share = await leaveShare(params.id, user.id);
+    if (share.status === "ended") {
+      return { share: { id: share.id, status: share.status, endedAt: share.endedAt?.toISOString() } };
+    }
+    const fullShare = await loadShareForUser(user.id, share.id).catch(() => null);
+    return fullShare ? { share: toShareDto(fullShare, null) } : { share: { id: share.id, status: share.status } };
   });
 }
