@@ -210,3 +210,76 @@ describe("pause and resume", () => {
     expect(resumed.json().share.status).toBe("active");
   });
 });
+
+describe("invite link management", () => {
+  beforeEach(cleanup);
+
+  it("creator regenerates token; old one no longer works", async () => {
+    const alice = await makeUser("alice@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const oldToken = created.json().inviteToken;
+    const shareId = created.json().share.id;
+
+    const regen = await app.inject({
+      method: "POST", url: `/v1/shares/${shareId}/regenerate-invite`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+    const newToken = regen.json().inviteToken;
+    expect(newToken).not.toEqual(oldToken);
+
+    const oldPreview = await app.inject({ method: "GET", url: `/v1/shares/preview/${oldToken}` });
+    expect(oldPreview.statusCode).toBe(410);
+
+    const newPreview = await app.inject({ method: "GET", url: `/v1/shares/preview/${newToken}` });
+    expect(newPreview.statusCode).toBe(200);
+  });
+
+  it("creator revokes token; preview returns 410", async () => {
+    const alice = await makeUser("alice@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const token = created.json().inviteToken;
+    const shareId = created.json().share.id;
+
+    await app.inject({
+      method: "DELETE", url: `/v1/shares/${shareId}/invite`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+
+    const preview = await app.inject({ method: "GET", url: `/v1/shares/preview/${token}` });
+    expect(preview.statusCode).toBe(410);
+  });
+
+  it("non-creator gets 403 on regenerate", async () => {
+    const alice = await makeUser("alice@example.com");
+    const bob = await makeUser("bob@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const token = created.json().inviteToken;
+    const shareId = created.json().share.id;
+    await app.inject({
+      method: "POST", url: `/v1/shares/accept/${token}`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+      payload: { destinationProvider: "apple_music" },
+    });
+
+    const res = await app.inject({
+      method: "POST", url: `/v1/shares/${shareId}/regenerate-invite`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+});

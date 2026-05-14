@@ -80,6 +80,27 @@ function toShareDto(
   };
 }
 
+async function loadShareAsCreator(userId: string, shareId: string) {
+  const share = await prisma.pair.findUnique({ where: { id: shareId }, include: { members: true } });
+  if (!share) {
+    const err = new Error("Share not found") as Error & { statusCode?: number };
+    err.statusCode = 404;
+    throw err;
+  }
+  if (share.creatorId !== userId) {
+    const err = new Error("Only the share creator can manage the invite link.") as Error & { statusCode?: number };
+    err.statusCode = 403;
+    throw err;
+  }
+  const stillMember = share.members.some((m) => m.userId === userId);
+  if (!stillMember) {
+    const err = new Error("Original creator has left the share; the link is permanently closed.") as Error & { statusCode?: number };
+    err.statusCode = 403;
+    throw err;
+  }
+  return share;
+}
+
 async function getLastSyncedAt(shareId: string): Promise<Date | null> {
   const row = await prisma.syncEvent.findFirst({
     where: { pairId: shareId, kind: "written" },
@@ -231,6 +252,29 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     await prisma.pair.update({ where: { id: params.id }, data: { status: "active" } });
     const share = await loadShareForUser(user.id, params.id);
     return { share: toShareDto(share, await getLastSyncedAt(share.id)) };
+  });
+
+  app.post("/v1/shares/:id/regenerate-invite", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareAsCreator(user.id, params.id);
+    const { token, expiresAt } = mintInviteToken(config.INVITE_TTL_DAYS);
+    await prisma.pair.update({
+      where: { id: params.id },
+      data: { inviteToken: token, inviteExpires: expiresAt },
+    });
+    return { inviteToken: token, inviteExpires: expiresAt.toISOString() };
+  });
+
+  app.delete("/v1/shares/:id/invite", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareAsCreator(user.id, params.id);
+    await prisma.pair.update({
+      where: { id: params.id },
+      data: { inviteToken: null, inviteExpires: null },
+    });
+    return { ok: true };
   });
 
   app.post("/v1/shares/:id/leave", async (req) => {
