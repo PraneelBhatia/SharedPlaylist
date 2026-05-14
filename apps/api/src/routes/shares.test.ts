@@ -64,3 +64,50 @@ describe("POST /v1/shares", () => {
     expect(conflict.statusCode).toBe(409);
   });
 });
+
+describe("GET /v1/shares and GET /v1/shares/:id", () => {
+  beforeEach(cleanup);
+
+  it("GET /v1/shares lists the user's shares with members", async () => {
+    const alice = await makeUser("alice@example.com");
+    const app = buildServer();
+
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "spotify_pl_abc", sourcePlaylistName: "Road Trip Mix" },
+    });
+    const createdId = created.json().share.id;
+
+    const list = await app.inject({
+      method: "GET", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+
+    expect(list.statusCode).toBe(200);
+    const shares = list.json().shares;
+    expect(shares).toHaveLength(1);
+    expect(shares[0].id).toBe(createdId);
+    expect(shares[0].members).toHaveLength(1);
+    expect(shares[0].members[0].userId).toBe(alice.id);
+    expect(shares[0].members[0].isCreator).toBe(true);
+  });
+
+  it("GET /v1/shares/:id returns 403 for non-members", async () => {
+    const alice = await makeUser("alice@example.com");
+    const bob = await makeUser("bob@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "spotify_pl_abc", sourcePlaylistName: "Road Trip Mix" },
+    });
+    const createdId = created.json().share.id;
+    const res = await app.inject({
+      method: "GET",
+      url: `/v1/shares/${createdId}`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+    });
+    expect(res.statusCode).toBe(403);
+  });
+});
