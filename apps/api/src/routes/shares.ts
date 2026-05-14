@@ -10,6 +10,7 @@ import { hashIp } from "../shares/ip-hash.ts";
 import { acceptShare } from "../shares/accept-share.ts";
 import { leaveShare } from "../shares/leave-share.ts";
 import { createDestinationPlaylistFor } from "../shares/create-destination-playlist.ts";
+import { enqueueSync } from "../queues/sync-queue.ts";
 import type { Provider } from "@sharedplaylist/shared-types";
 
 const createShareBody = z.object({
@@ -286,5 +287,26 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     }
     const fullShare = await loadShareForUser(user.id, share.id).catch(() => null);
     return fullShare ? { share: toShareDto(fullShare, null) } : { share: { id: share.id, status: share.status } };
+  });
+
+  app.post("/v1/shares/:id/sync-now", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareForUser(user.id, params.id);
+    await enqueueSync(params.id);
+    return { ok: true };
+  });
+
+  app.get("/v1/shares/:id/events", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareForUser(user.id, params.id);
+    const events = await prisma.syncEvent.findMany({
+      where: { pairId: params.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    const lastSyncedAt = await getLastSyncedAt(params.id);
+    return { events, lastSyncedAt: lastSyncedAt?.toISOString() ?? null };
   });
 }

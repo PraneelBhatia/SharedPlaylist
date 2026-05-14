@@ -283,3 +283,26 @@ describe("invite link management", () => {
     expect(res.statusCode).toBe(403);
   });
 });
+
+describe("sync-now and events", () => {
+  beforeEach(cleanup);
+
+  it("events returns empty list with null lastSyncedAt for fresh share", async () => {
+    const alice = await makeUser("alice@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const shareId = created.json().share.id;
+
+    const res = await app.inject({
+      method: "GET", url: `/v1/shares/${shareId}/events`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().events).toEqual([]);
+    expect(res.json().lastSyncedAt).toBeNull();
+  });
+});
