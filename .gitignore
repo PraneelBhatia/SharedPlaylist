@@ -41,3 +41,11 @@ Thumbs.db
 
 # Brainstorm artifacts (these are local-only)
 .superpowers/
+
+# Playwright artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Worktree-local screenshots from agent visual inspections
+.tmp-screenshots/
