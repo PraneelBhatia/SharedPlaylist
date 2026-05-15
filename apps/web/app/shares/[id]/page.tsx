@@ -11,6 +11,7 @@ import type {
 import { ApiError, sharesApi } from "../../_lib/api-client";
 import { InviteBlock } from "../../_components/invite-block";
 import { LifecycleControls } from "../../_components/lifecycle-controls";
+import { RecoveryBlock } from "../../_components/recovery-block";
 
 export const dynamic = "force-dynamic";
 
@@ -175,6 +176,13 @@ export default async function ShareDetailPage({
         memberCount={share.memberCount}
         memberCap={share.memberCap}
       />
+
+      {share.status === "needs_reauth" ? (
+        <section className="detail-section" aria-label="Reconnect">
+          <span className="detail-section-eyebrow">Reconnect</span>
+          <RecoveryBlock share={share} />
+        </section>
+      ) : null}
 
       {showInvite && share.inviteToken ? (
         <section className="detail-section" aria-label="Invite link">

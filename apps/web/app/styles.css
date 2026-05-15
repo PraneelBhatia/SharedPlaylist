@@ -426,6 +426,78 @@ button {
 }
 
 /* ------------------------------------------------------------------ */
+/* Recovery block (needs_reauth inline UI)                             */
+/* ------------------------------------------------------------------ */
+
+.recovery-block {
+  margin-top: 14px;
+  padding: 14px 16px 16px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recovery-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-pending);
+}
+
+.recovery-headline {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  letter-spacing: -0.003em;
+}
+
+.recovery-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.recovery-btn {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 1px;
+  transition: border-color 140ms ease, color 140ms ease;
+  letter-spacing: -0.003em;
+}
+
+.recovery-btn:hover {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+}
+
+.recovery-btn.primary {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.recovery-btn.primary:hover {
+  border-bottom-color: var(--accent-pending);
+  color: var(--accent-pending);
+}
+
+.recovery-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recovery-error {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* Empty state                                                         */
 /* ------------------------------------------------------------------ */
 

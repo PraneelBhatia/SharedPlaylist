@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { Provider, ShareDto, ShareMemberDto } from "@sharedplaylist/shared-types";
 import { sharesApi } from "../_lib/api-client";
+import { RecoveryBlock } from "./recovery-block";
 
 const PROVIDER_LABEL: Record<Provider, string> = {
   spotify: "Spotify",
@@ -163,9 +164,12 @@ export function ShareCard({ share }: { share: ShareDto }): React.JSX.Element {
       ) : null}
 
       {share.status === "needs_reauth" ? (
-        <div className="status-row">
-          <span>Sync paused — a member needs to reconnect their account.</span>
-        </div>
+        <>
+          <div className="status-row">
+            <span>Sync paused — a member needs to reconnect their account.</span>
+          </div>
+          <RecoveryBlock share={share} />
+        </>
       ) : null}
 
       {share.status === "paused" ? (

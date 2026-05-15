@@ -81,6 +81,11 @@ export const sharesApi = {
     apiFetch<{ events: SyncEventDto[]; lastSyncedAt: string | null }>(
       `/v1/shares/${id}/events`,
     ),
+  recover: (id: string, body: { action: "create" | "select"; playlistId?: string }) =>
+    apiFetch<{ share: ShareDto }>(`/v1/shares/${id}/recover`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
 
 export const playlistsApi = {
