@@ -520,3 +520,199 @@ button {
     font-size: 26px;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* /share/new — playlist picker and invite-link generator             */
+/* ------------------------------------------------------------------ */
+
+.new-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-top: 12px;
+}
+
+.new-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+
+.new-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 4px 0 0;
+  line-height: 1.55;
+}
+
+.new-provider-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.new-provider-btn {
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink-soft);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.new-provider-btn:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--hover);
+}
+
+.new-provider-btn.active {
+  background: var(--ink);
+  color: #ffffff;
+  border-color: var(--ink);
+}
+
+.new-provider-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.new-pick-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.new-pick-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 18px 12px;
+  margin: 0 -12px;
+  border-top: 1px solid var(--hairline);
+  border-radius: 4px;
+  transition: background-color 120ms ease;
+}
+
+.new-pick-row:first-child {
+  border-top: 1px solid var(--ink);
+}
+
+.new-pick-row:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.new-pick-row:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.new-pick-title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.008em;
+  font-variation-settings: "opsz" 16, "SOFT" 30;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.new-pick-meta {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: -0.003em;
+  flex-shrink: 0;
+}
+
+.new-connect-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  border-top: 1px solid var(--ink);
+  padding-top: 28px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.new-connect-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 440px;
+}
+
+.new-loading {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 20px 0 4px;
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+
+.new-done {
+  padding-top: 24px;
+  gap: 12px;
+}
+
+.new-done-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  font-variation-settings: "opsz" 30, "SOFT" 50;
+  color: var(--ink);
+  margin: 4px 0 0;
+  max-width: 520px;
+}
+
+.new-done-title em {
+  font-style: italic;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.new-done-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 8px 0 4px;
+  max-width: 460px;
+}
+
+.new-playlist-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: -0.003em;
+}
+
+.new-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
