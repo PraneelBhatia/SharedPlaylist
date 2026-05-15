@@ -284,6 +284,41 @@ describe("invite link management", () => {
   });
 });
 
+describe("invite analytics", () => {
+  beforeEach(cleanup);
+
+  it("creator sees view/conversion counts after preview + accept", async () => {
+    const alice = await makeUser("alice@example.com");
+    const bob = await makeUser("bob@example.com");
+    const app = buildServer();
+    const created = await app.inject({
+      method: "POST", url: "/v1/shares",
+      headers: { [TEST_USER_HEADER]: alice.id },
+      payload: { sourceProvider: "spotify", sourcePlaylistId: "pl1", sourcePlaylistName: "M" },
+    });
+    const token = created.json().inviteToken;
+    const shareId = created.json().share.id;
+
+    await app.inject({ method: "GET", url: `/v1/shares/preview/${token}` });
+    await app.inject({ method: "GET", url: `/v1/shares/preview/${token}` });
+    await app.inject({
+      method: "POST", url: `/v1/shares/accept/${token}`,
+      headers: { [TEST_USER_HEADER]: bob.id },
+      payload: { destinationProvider: "apple_music" },
+    });
+
+    const analytics = await app.inject({
+      method: "GET", url: `/v1/shares/${shareId}/invite-analytics`,
+      headers: { [TEST_USER_HEADER]: alice.id },
+    });
+    expect(analytics.statusCode).toBe(200);
+    const body = analytics.json();
+    expect(body.views).toBe(2);
+    expect(body.conversions).toBe(1);
+    expect(body.recentViews.length).toBe(2);
+  });
+});
+
 describe("sync-now and events", () => {
   beforeEach(cleanup);
 

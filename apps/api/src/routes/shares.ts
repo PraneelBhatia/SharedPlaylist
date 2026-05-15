@@ -323,6 +323,32 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     return { share: toShareDto(full, await getLastSyncedAt(share.id)) };
   });
 
+  app.get("/v1/shares/:id/invite-analytics", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    await loadShareAsCreator(user.id, params.id);
+
+    const [views, conversions, recentViews] = await Promise.all([
+      prisma.shareInviteView.count({ where: { pairId: params.id } }),
+      prisma.shareInviteView.count({ where: { pairId: params.id, converted: true } }),
+      prisma.shareInviteView.findMany({
+        where: { pairId: params.id },
+        orderBy: { viewedAt: "desc" },
+        take: 25,
+        select: { viewedAt: true, converted: true },
+      }),
+    ]);
+
+    return {
+      views,
+      conversions,
+      recentViews: recentViews.map((v) => ({
+        viewedAt: v.viewedAt.toISOString(),
+        converted: v.converted,
+      })),
+    };
+  });
+
   app.get("/v1/shares/:id/events", async (req) => {
     const user = await getCurrentUser(req);
     const params = z.object({ id: z.string() }).parse(req.params);
