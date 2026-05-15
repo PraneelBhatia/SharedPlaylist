@@ -18,6 +18,8 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
     "db:generate": "pnpm --filter @sharedplaylist/api db:generate",
     "db:migrate": "pnpm --filter @sharedplaylist/api db:migrate",
     "smoke:auth:spotify": "node --env-file=.env --import tsx smoke/auth/spotify-pkce.ts",
@@ -30,6 +32,7 @@
     "jose": "^5.9.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.7.4",
     "tsx": "^4.19.1",
