@@ -1,84 +1,66 @@
-import type { ConnectionDto } from "@sharedplaylist/shared-types";
+import Link from "next/link";
+import type { ShareDto } from "@sharedplaylist/shared-types";
+import { ApiError, sharesApi } from "./_lib/api-client";
+import { ShareCard } from "./_components/share-card";
 
-const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:4000";
+export const dynamic = "force-dynamic";
 
-async function fetchJson<T>(path: string, fallback: T): Promise<T> {
+type LoadResult =
+  | { kind: "ok"; shares: ShareDto[] }
+  | { kind: "error"; message: string };
+
+async function loadShares(): Promise<LoadResult> {
   try {
-    const res = await fetch(`${apiBase}${path}`, { cache: "no-store" });
-    if (!res.ok) return fallback;
-    return (await res.json()) as T;
-  } catch {
-    return fallback;
+    const { shares } = await sharesApi.list();
+    return { kind: "ok", shares };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      return { kind: "error", message: `Couldn't reach the API (${err.status}).` };
+    }
+    return { kind: "error", message: "Couldn't reach the API." };
   }
 }
 
-export default async function Home() {
-  const health = await fetchJson<{ ok: boolean }>("/v1/health", { ok: false });
-  const connections = await fetchJson<{ connections: ConnectionDto[]; youtubeBetaEnabled: boolean }>(
-    "/v1/connections",
-    { connections: [], youtubeBetaEnabled: false },
-  );
-
-  const providers = [
-    { id: "spotify", name: "Spotify", stable: true },
-    { id: "apple_music", name: "Apple Music", stable: true },
-    { id: "youtube", name: "YouTube Music", stable: false },
-  ];
+export default async function DashboardPage(): Promise<React.JSX.Element> {
+  const result = await loadShares();
+  const shares = result.kind === "ok" ? result.shares : [];
+  const errorMessage = result.kind === "error" ? result.message : null;
 
   return (
-    <main>
-      <div className="topbar">
-        <div>
-          <h1>SharedPlaylist</h1>
-          <p>Pair setup, provider status, and live sync activity.</p>
-        </div>
-        <span className={health.ok ? "status" : "status bad"}>{health.ok ? "API online" : "API offline"}</span>
-      </div>
+    <main className="shell">
+      <header className="masthead">
+        <h1>
+          Shared <em>playlists</em>
+        </h1>
+        <Link href="/share/new" className="share-cta" prefetch>
+          <span className="plus">+</span>
+          <span>Share a playlist</span>
+        </Link>
+      </header>
 
-      <section className="grid">
-        <div className="panel wide">
-          <h2>Provider connections</h2>
-          <div className="list">
-            {providers.map((provider) => {
-              const connection = connections.connections.find((item) => item.provider === provider.id);
-              const disabled = provider.id === "youtube" && !connections.youtubeBetaEnabled;
-              return (
-                <div className="row" key={provider.id}>
-                  <div>
-                    <div className="label">{provider.name}</div>
-                    <div className="subtle">
-                      {disabled ? "Beta disabled" : provider.stable ? "Stable provider" : "Beta provider"}
-                    </div>
-                  </div>
-                  <span className={connection?.connected ? "status" : "status bad"}>
-                    {connection?.connected ? "Connected" : "Not connected"}
-                  </span>
-                  {!connection?.connected && !disabled ? (
-                    <a className="action" href={`/v1/connections/${provider.id}/start`}>
-                      Connect
-                    </a>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="panel">
-          <h2>Sync target</h2>
-          <p>Spotify and Apple Music are the reliability target. YouTube is available only when beta mode is enabled.</p>
-        </div>
-
-        <div className="panel">
-          <h2>Persistence</h2>
-          <p>Postgres stores tokens, pair state, playlist cursors, track mappings, unmatched tracks, and sync events.</p>
-        </div>
-
-        <div className="panel">
-          <h2>Scheduler</h2>
-          <p>Redis and BullMQ schedule polling jobs. Workers rebuild schedules from Postgres after Redis restarts.</p>
-        </div>
-      </section>
+      {shares.length === 0 ? (
+        <EmptyState errorMessage={errorMessage} />
+      ) : (
+        <section className="card-list" aria-label="Your shared playlists">
+          {shares.map((share) => (
+            <ShareCard key={share.id} share={share} />
+          ))}
+        </section>
+      )}
     </main>
+  );
+}
+
+function EmptyState({ errorMessage }: { errorMessage: string | null }): React.JSX.Element {
+  return (
+    <section className="empty" aria-label="Empty dashboard">
+      <span className="empty-eyebrow">Nothing here yet</span>
+      <h2>No shared playlists.</h2>
+      <p>Share a playlist to start syncing songs with friends across Spotify, Apple Music, and YouTube.</p>
+      <Link href="/share/new" className="empty-cta">
+        Share a playlist
+      </Link>
+      {errorMessage ? <div className="empty-notice">{errorMessage}</div> : null}
+    </section>
   );
 }
