@@ -10,6 +10,7 @@ import { hashIp } from "../shares/ip-hash.ts";
 import { acceptShare } from "../shares/accept-share.ts";
 import { leaveShare } from "../shares/leave-share.ts";
 import { createDestinationPlaylistFor } from "../shares/create-destination-playlist.ts";
+import { recoverShare } from "../shares/recover-share.ts";
 import { enqueueSync } from "../queues/sync-queue.ts";
 import type { Provider } from "@sharedplaylist/shared-types";
 
@@ -295,6 +296,31 @@ export async function registerShareRoutes(app: FastifyInstance): Promise<void> {
     await loadShareForUser(user.id, params.id);
     await enqueueSync(params.id);
     return { ok: true };
+  });
+
+  const recoverBody = z.object({
+    action: z.enum(["create", "select"]),
+    playlistId: z.string().optional(),
+  });
+
+  app.post("/v1/shares/:id/recover", async (req) => {
+    const user = await getCurrentUser(req);
+    const params = z.object({ id: z.string() }).parse(req.params);
+    const body = recoverBody.parse(req.body);
+    await loadShareForUser(user.id, params.id);
+
+    const autoCreate = async (name: string, provider: Provider) =>
+      createDestinationPlaylistFor(user.id, name, provider);
+
+    const share = await recoverShare({
+      shareId: params.id,
+      userId: user.id,
+      action: body.action,
+      playlistId: body.playlistId,
+      autoCreatePlaylist: autoCreate,
+    });
+    const full = await loadShareForUser(user.id, share.id);
+    return { share: toShareDto(full, await getLastSyncedAt(share.id)) };
   });
 
   app.get("/v1/shares/:id/events", async (req) => {
