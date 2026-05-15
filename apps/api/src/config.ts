@@ -23,6 +23,10 @@ const envSchema = z.object({
     .transform((value) => value === "true"),
   SYNC_ACTIVE_INTERVAL_SECONDS: z.coerce.number().default(30),
   SYNC_IDLE_INTERVAL_SECONDS: z.coerce.number().default(300),
+  MAX_SHARE_MEMBERS: z.coerce.number().int().min(2).max(50).default(5),
+  INVITE_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  ADMIN_OWNER_EMAIL: z.string().default(""),
+  IP_HASH_SALT: z.string().default("change-me-per-deploy"),
 });
 
 export const config = envSchema.parse(process.env);

@@ -2,6 +2,7 @@ import type { Provider } from "@sharedplaylist/shared-types";
 import type { ProviderClient } from "./types.ts";
 import {
   addSpotifyTracksToPlaylist,
+  createSpotifyPlaylist,
   exchangeSpotifyCode,
   getSpotifyAuthUrl,
   getSpotifyPlaylistSnapshot,
@@ -12,6 +13,7 @@ import {
 } from "./spotify.ts";
 import {
   addAppleSongsToPlaylist,
+  createApplePlaylist,
   findAppleSongByIsrc,
   getApplePlaylistSnapshot,
   listAppleLibraryPlaylists,
@@ -20,6 +22,7 @@ import {
 } from "./apple-music.ts";
 import {
   addYoutubeTracksToPlaylist,
+  createYoutubePlaylist,
   exchangeYoutubeCode,
   getYoutubeAuthUrl,
   getYoutubePlaylistSnapshot,
@@ -38,6 +41,7 @@ const clients: Record<Provider, ProviderClient> = {
     getPlaylistSnapshot: getSpotifyPlaylistSnapshot,
     listPlaylistTracks: listSpotifyPlaylistTracks,
     addTracksToPlaylist: addSpotifyTracksToPlaylist,
+    createPlaylist: createSpotifyPlaylist,
     searchTracks: (query, accessToken) => {
       if (!accessToken) throw new Error("Spotify access token is required");
       return searchSpotifyTracks(accessToken, query);
@@ -49,6 +53,7 @@ const clients: Record<Provider, ProviderClient> = {
     getPlaylistSnapshot: getApplePlaylistSnapshot,
     listPlaylistTracks: listApplePlaylistTracks,
     addTracksToPlaylist: addAppleSongsToPlaylist,
+    createPlaylist: createApplePlaylist,
     findTrackByIsrc: findAppleSongByIsrc,
     searchTracks: searchAppleSongs,
   },
@@ -60,6 +65,7 @@ const clients: Record<Provider, ProviderClient> = {
     getPlaylistSnapshot: getYoutubePlaylistSnapshot,
     listPlaylistTracks: listYoutubePlaylistTracks,
     addTracksToPlaylist: addYoutubeTracksToPlaylist,
+    createPlaylist: createYoutubePlaylist,
     searchTracks: (query, accessToken) => {
       if (!accessToken) throw new Error("YouTube access token is required");
       return searchYoutubeTracks(accessToken, query);

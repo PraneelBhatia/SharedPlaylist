@@ -28,6 +28,7 @@ export type ProviderClient = {
   getPlaylistSnapshot(accessToken: string, playlistId: string, userToken?: string): Promise<PlaylistSnapshot>;
   listPlaylistTracks(accessToken: string, playlistId: string, userToken?: string): Promise<ProviderTrack[]>;
   addTracksToPlaylist(accessToken: string, playlistId: string, tracks: ProviderTrack[], userToken?: string): Promise<void>;
+  createPlaylist(accessToken: string, name: string, userToken?: string): Promise<{ playlistId: string; name: string }>;
   findTrackByIsrc?(isrc: string, accessToken?: string, userToken?: string): Promise<ProviderTrack | null>;
   searchTracks(query: string, accessToken?: string, userToken?: string): Promise<ProviderTrack[]>;
 };

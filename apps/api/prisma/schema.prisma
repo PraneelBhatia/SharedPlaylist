@@ -16,7 +16,9 @@ enum Provider {
 enum PairStatus {
   pending
   active
+  needs_reauth
   paused
+  ended
 }
 
 enum MatchStrategy {
@@ -35,13 +37,16 @@ enum SyncEventKind {
 }
 
 model User {
-  id          String              @id @default(cuid())
-  email       String?             @unique
-  displayName String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  connections ServiceConnection[]
-  memberships PairMember[]
+  id            String              @id @default(cuid())
+  email         String?             @unique
+  displayName   String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  connections   ServiceConnection[]
+  memberships   PairMember[]
+  playlistLinks PlaylistLink[]
+  createdShares Pair[]              @relation("CreatedPairs")
+  endedShares   Pair[]              @relation("EndedPairs")
 }
 
 model ServiceConnection {
@@ -63,17 +68,29 @@ model ServiceConnection {
 }
 
 model Pair {
-  id            String         @id @default(cuid())
-  status        PairStatus     @default(pending)
-  inviteToken   String?        @unique
+  id            String     @id @default(cuid())
+  status        PairStatus @default(pending)
+  inviteToken   String?    @unique
   inviteExpires DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  members       PairMember[]
-  playlists     PlaylistLink[]
-  mappings      TrackMapping[]
-  events        SyncEvent[]
-  unmatched     UnmatchedTrack[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  creatorId          String
+  creator            User     @relation("CreatedPairs", fields: [creatorId], references: [id], onDelete: Restrict)
+  sourceProvider     Provider
+  sourcePlaylistId   String
+  sourcePlaylistName String
+
+  endedAt   DateTime?
+  endedById String?
+  endedBy   User?     @relation("EndedPairs", fields: [endedById], references: [id], onDelete: SetNull)
+
+  members     PairMember[]
+  playlists   PlaylistLink[]
+  mappings    TrackMapping[]
+  events      SyncEvent[]
+  unmatched   UnmatchedTrack[]
+  inviteViews ShareInviteView[]
 }
 
 model PairMember {
@@ -88,19 +105,23 @@ model PairMember {
 }
 
 model PlaylistLink {
-  id          String   @id @default(cuid())
-  pairId      String
-  provider    Provider
-  playlistId  String
-  name        String?
-  canEdit     Boolean  @default(true)
-  cursor      String?
+  id           String    @id @default(cuid())
+  pairId       String
+  userId       String
+  provider     Provider
+  playlistId   String
+  name         String?
+  canEdit      Boolean   @default(true)
+  cursor       String?
   lastPolledAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  pair        Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  pair         Pair      @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([pairId, provider])
+  @@unique([pairId, userId])
+  @@index([pairId])
+  @@index([userId])
 }
 
 model TrackMapping {
@@ -136,7 +157,7 @@ model SyncEvent {
 }
 
 model UnmatchedTrack {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   pairId              String
   sourceProvider      Provider
   sourceTrackId       String
@@ -146,8 +167,20 @@ model UnmatchedTrack {
   isrc                String?
   candidates          Json?
   reviewedAt          DateTime?
-  createdAt           DateTime @default(now())
-  pair                Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  createdAt           DateTime  @default(now())
+  pair                Pair      @relation(fields: [pairId], references: [id], onDelete: Cascade)
 
   @@index([pairId, createdAt])
+}
+
+model ShareInviteView {
+  id        String   @id @default(cuid())
+  pairId    String
+  viewedAt  DateTime @default(now())
+  userAgent String?
+  ipHash    String?
+  converted Boolean  @default(false)
+  pair      Pair     @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([pairId, viewedAt])
 }

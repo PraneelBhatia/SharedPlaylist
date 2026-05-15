@@ -3,8 +3,9 @@ import { config } from "./config.ts";
 import { registerConnectionRoutes } from "./routes/connections.ts";
 import { registerHealthRoutes } from "./routes/health.ts";
 import { registerMeRoutes } from "./routes/me.ts";
-import { registerPairRoutes } from "./routes/pairs.ts";
 import { registerPlaylistRoutes } from "./routes/playlists.ts";
+import { registerShareRoutes } from "./routes/shares.ts";
+import { registerAdminRoutes } from "./routes/admin.ts";
 
 export function buildServer() {
   const app = Fastify({ logger: true });
@@ -21,7 +22,8 @@ export function buildServer() {
   app.register(registerMeRoutes);
   app.register(registerConnectionRoutes);
   app.register(registerPlaylistRoutes);
-  app.register(registerPairRoutes);
+  app.register(registerShareRoutes);
+  app.register(registerAdminRoutes);
 
   return app;
 }

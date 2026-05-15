@@ -206,6 +206,19 @@ export async function addSpotifyTracksToPlaylist(
   }
 }
 
+export async function createSpotifyPlaylist(
+  accessToken: string,
+  name: string,
+): Promise<{ playlistId: string; name: string }> {
+  const res = await spotifyFetch(accessToken, `/me/playlists`, {
+    method: "POST",
+    body: JSON.stringify({ name, public: false, collaborative: false }),
+  });
+  if (!res.ok) throw new Error(`Spotify playlist create failed: ${res.status} ${await res.text()}`);
+  const body = (await res.json()) as { id: string; name?: string };
+  return { playlistId: body.id, name: body.name ?? name };
+}
+
 export async function searchSpotifyTracks(
   accessToken: string,
   query: string,

@@ -2,6 +2,7 @@ import type { Provider } from "@sharedplaylist/shared-types";
 import { prisma } from "../db/prisma.ts";
 import { getProviderClient } from "../providers/index.ts";
 import { matchTrack } from "./matcher.ts";
+import { computeFanoutTargets } from "./mesh-fanout.ts";
 import { getConnectionTokens } from "./tokens.ts";
 
 export type SyncPairResult = {
@@ -17,15 +18,17 @@ export async function syncPair(pairId: string): Promise<SyncPairResult> {
   if (!pair) throw new Error(`Pair ${pairId} not found`);
   if (pair.status !== "active") return { active: false, events: 0 };
   if (pair.playlists.length < 2 || pair.members.length < 2) {
-    await writeEvent(pairId, "skipped", "spotify", "Pair is not fully configured");
+    await writeEvent(pairId, "skipped", pair.sourceProvider as Provider, "Share is not fully configured");
     return { active: false, events: 1 };
   }
 
   let eventCount = 0;
+
   for (const sourceLink of pair.playlists) {
-    const destinationLinks = pair.playlists.filter((link) => link.provider !== sourceLink.provider);
-    const sourceMember = pair.members[0]!;
-    const sourceTokens = await getConnectionTokens(sourceMember.userId, sourceLink.provider as Provider);
+    const targets = computeFanoutTargets(pair.playlists, sourceLink.userId);
+    if (targets.length === 0) continue;
+
+    const sourceTokens = await getConnectionTokens(sourceLink.userId, sourceLink.provider as Provider);
     const sourceClient = getProviderClient(sourceLink.provider as Provider);
     const snapshot = await sourceClient.getPlaylistSnapshot(
       sourceTokens.accessToken,
@@ -49,13 +52,12 @@ export async function syncPair(pairId: string): Promise<SyncPairResult> {
       sourceLink.playlistId,
       sourceTokens.userToken,
     );
-    await writeEvent(pairId, "detected", sourceLink.provider as Provider, `Read ${sourceTracks.length} tracks`);
+    await writeEvent(pairId, "detected", sourceLink.provider as Provider, `Read ${sourceTracks.length} tracks from ${sourceLink.userId}`);
     eventCount++;
 
-    for (const destinationLink of destinationLinks) {
-      const destinationMember = pair.members[1]!;
-      const destinationProvider = destinationLink.provider as Provider;
-      const destinationTokens = await getConnectionTokens(destinationMember.userId, destinationProvider);
+    for (const target of targets) {
+      const destinationProvider = target.provider as Provider;
+      const destinationTokens = await getConnectionTokens(target.userId, destinationProvider);
       const destinationClient = getProviderClient(destinationProvider);
 
       for (const sourceTrack of sourceTracks) {
@@ -96,11 +98,7 @@ export async function syncPair(pairId: string): Promise<SyncPairResult> {
         }
 
         const alreadyInDestination = await prisma.trackMapping.findFirst({
-          where: {
-            pairId,
-            destinationProvider,
-            destinationTrackId: match.track.id,
-          },
+          where: { pairId, destinationProvider, destinationTrackId: match.track.id },
         });
         if (alreadyInDestination) {
           await writeMapping(pairId, sourceLink.provider as Provider, sourceTrack.id, destinationProvider, match);
@@ -111,7 +109,7 @@ export async function syncPair(pairId: string): Promise<SyncPairResult> {
 
         await destinationClient.addTracksToPlaylist(
           destinationTokens.accessToken,
-          destinationLink.playlistId,
+          target.playlistId,
           [match.track],
           destinationTokens.userToken,
         );
@@ -120,7 +118,7 @@ export async function syncPair(pairId: string): Promise<SyncPairResult> {
           pairId,
           "written",
           destinationProvider,
-          `Added ${match.track.title}`,
+          `Added ${match.track.title} to ${target.userId}`,
           match.confidence,
         );
         eventCount++;
@@ -168,7 +166,5 @@ async function writeEvent(
   message: string,
   confidence?: number,
 ): Promise<void> {
-  await prisma.syncEvent.create({
-    data: { pairId, kind, provider, message, confidence },
-  });
+  await prisma.syncEvent.create({ data: { pairId, kind, provider, message, confidence } });
 }
