@@ -5,6 +5,7 @@ import { registerHealthRoutes } from "./routes/health.ts";
 import { registerMeRoutes } from "./routes/me.ts";
 import { registerPlaylistRoutes } from "./routes/playlists.ts";
 import { registerShareRoutes } from "./routes/shares.ts";
+import { registerAdminRoutes } from "./routes/admin.ts";
 
 export function buildServer() {
   const app = Fastify({ logger: true });
@@ -22,6 +23,7 @@ export function buildServer() {
   app.register(registerConnectionRoutes);
   app.register(registerPlaylistRoutes);
   app.register(registerShareRoutes);
+  app.register(registerAdminRoutes);
 
   return app;
 }
