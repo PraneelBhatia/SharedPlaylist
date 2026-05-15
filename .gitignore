@@ -41,3 +41,17 @@ Thumbs.db
 
 # Brainstorm artifacts (these are local-only)
 .superpowers/
+
+# Deploy plumbing — local-only, scp'd to VM. Never published.
+Caddyfile
+docker-compose.yml
+
+# Agent instructions — local-only, not part of the public repo.
+AGENTS.md
+CLAUDE.md
+
+# Internal design specs — not part of the public repo.
+docs/superpowers/
+
+# Claude Code worktrees and session state — local-only.
+.claude/
