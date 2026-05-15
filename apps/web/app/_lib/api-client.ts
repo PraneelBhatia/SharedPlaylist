@@ -3,6 +3,7 @@ import type {
   SharePreviewDto,
   InviteAnalyticsDto,
   AdminStatsDto,
+  SyncEventDto,
 } from "@sharedplaylist/shared-types";
 
 const apiBase =
@@ -76,6 +77,10 @@ export const sharesApi = {
     apiFetch<{ ok: true }>(`/v1/shares/${id}/invite`, { method: "DELETE" }),
   inviteAnalytics: (id: string) =>
     apiFetch<InviteAnalyticsDto>(`/v1/shares/${id}/invite-analytics`),
+  events: (id: string) =>
+    apiFetch<{ events: SyncEventDto[]; lastSyncedAt: string | null }>(
+      `/v1/shares/${id}/events`,
+    ),
 };
 
 export const playlistsApi = {
