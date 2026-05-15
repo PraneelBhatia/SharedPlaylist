@@ -716,3 +716,146 @@ button {
   margin-top: 16px;
   flex-wrap: wrap;
 }
+
+/* ------------------------------------------------------------------ */
+/* /i/[token] — public invite landing                                  */
+/* ------------------------------------------------------------------ */
+
+.invite-page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 0 0;
+  border-top: 1px solid var(--ink);
+}
+
+.invite-page-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+  margin-top: 24px;
+}
+
+.invite-page-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  font-variation-settings: "opsz" 30, "SOFT" 50;
+  color: var(--ink);
+  margin: 6px 0 0;
+  max-width: 560px;
+}
+
+.invite-page-title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.invite-page-title-muted {
+  color: var(--ink-soft);
+}
+
+.invite-page-subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 6px 0 0;
+  max-width: 460px;
+}
+
+.invite-page-continue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--hairline);
+  width: 100%;
+}
+
+.invite-page-continue-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+
+.invite-page-providers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.invite-page-provider-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink-soft);
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.invite-page-provider-btn:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.invite-page-provider-btn:active {
+  transform: translateY(0.5px);
+}
+
+.invite-page-footnote {
+  font-size: 12px;
+  color: var(--muted-soft);
+  line-height: 1.6;
+  margin: 18px 0 0;
+  max-width: 460px;
+  letter-spacing: -0.002em;
+}
+
+.invite-page-unavailable {
+  gap: 12px;
+}
+
+.invite-page-back {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  margin-top: 18px;
+  transition: color 140ms ease, border-color 140ms ease;
+  letter-spacing: -0.003em;
+}
+
+.invite-page-back:hover {
+  color: var(--ink);
+  border-bottom-color: var(--hairline);
+}
+
+@media (max-width: 640px) {
+  .invite-page-title {
+    font-size: 24px;
+  }
+}
