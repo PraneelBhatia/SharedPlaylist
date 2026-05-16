@@ -156,7 +156,7 @@ export default async function ShareDetailPage({
     <main className="shell">
       <header className="masthead detail-masthead">
         <div className="detail-masthead-left">
-          <Link href="/" className="detail-back" prefetch>
+          <Link href="/dashboard" className="detail-back" prefetch>
             <span aria-hidden>←</span>
             <span>Back to dashboard</span>
           </Link>
@@ -372,7 +372,7 @@ function Unavailable(): React.JSX.Element {
           The share may have ended, the link may be wrong, or you may not be a
           member.
         </p>
-        <Link href="/" className="invite-page-back">
+        <Link href="/dashboard" className="invite-page-back">
           Back to dashboard
         </Link>
       </section>

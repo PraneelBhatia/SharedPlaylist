@@ -81,7 +81,7 @@ export default async function AdminStatsPage(): Promise<React.JSX.Element> {
     <main className="shell">
       <header className="masthead detail-masthead">
         <div className="detail-masthead-left">
-          <Link href="/" className="detail-back" prefetch>
+          <Link href="/dashboard" className="detail-back" prefetch>
             <span aria-hidden>←</span>
             <span>Back to dashboard</span>
           </Link>

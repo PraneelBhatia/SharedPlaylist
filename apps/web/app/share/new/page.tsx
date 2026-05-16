@@ -107,7 +107,7 @@ export default function SharePlaylistPage(): React.JSX.Element {
         <h1>
           Share a <em>playlist</em>
         </h1>
-        <Link href="/" className="share-cta" prefetch>
+        <Link href="/dashboard" className="share-cta" prefetch>
           <span>Back to dashboard</span>
         </Link>
       </header>
@@ -239,7 +239,7 @@ export default function SharePlaylistPage(): React.JSX.Element {
             <button
               className="empty-cta"
               onClick={() => {
-                router.push("/");
+                router.push("/dashboard");
               }}
             >
               Done
